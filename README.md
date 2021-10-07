@@ -21,3 +21,7 @@
 ```bash
 docker-compose run --rm --service-ports npm run watch
 ```
+
+### xdebug
+
+for phpstorm you will need to map the project `src` to `/var/www/html` in the server tab
