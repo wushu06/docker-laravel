@@ -1,7 +1,7 @@
 version: '3'
 
 networks:
-  project:
+  laravel:
 
 services:
   site:
@@ -14,15 +14,17 @@ services:
     container_name: nginx_${NAME}
     ports:
       - ${NGINX_PORT}:80
+      - 431:443
     volumes:
-      - ./src:/var/www/html:delegated
+      - ..:/var/www/html:delegated
+      - ./nginx/certs:/etc/nginx/certs:delegated
     depends_on:
       - php
       - redis
       - mysql
       - mailhog
     networks:
-      project:
+      laravel:
         aliases:
           - ${NAME}.localhost
 
@@ -43,7 +45,7 @@ services:
     volumes:
       - ./dbdata:/var/lib/mysql
     networks:
-      - project
+      - laravel
 
   php:
     build:
@@ -54,11 +56,11 @@ services:
         - PHPGROUP=${PHPGROUP:-www-data}
     container_name: php_${NAME}
     volumes:
-      - ./src:/var/www/html:delegated
+      - ..:/var/www/html:delegated
       - ./uploads.ini:/usr/local/etc/php/conf.d/uploads.ini
       - ./xdebug.ini:/usr/local/etc/php/conf.d/xdebug.ini
     networks:
-      - project
+      - laravel
 
   redis:
     image: redis:alpine
@@ -67,7 +69,7 @@ services:
     ports:
       - ${REDIS_PORT}:6379
     networks:
-      - project
+      - laravel
 
   composer:
     build:
@@ -78,27 +80,27 @@ services:
         - PHPGROUP=${PHPGROUP:-www-data}
     container_name: composer_${NAME}
     volumes:
-      - ./src:/var/www/html
+      - ..:/var/www/html
     working_dir: /var/www/html
     depends_on:
       - php
     user: ${PHPUSER:-www-data}
     entrypoint: ['composer', '--ignore-platform-reqs']
     networks:
-      - project
+      - laravel
 
-  npm:
-    image: node:${NODE_VERSION}
-    container_name: npm_${NAME}
-    volumes:
-      - ./src:/var/www/html
-    ports:
-      - ${NODE_PORT_1}:3000
-      - ${NODE_PORT_2}:3001
-    working_dir: /var/www/html
-    entrypoint: ['npm']
-    networks:
-      - project
+#  npm:
+#    image: node:${NODE_VERSION}
+#    container_name: npm_${NAME}
+#    volumes:
+#      - ..:/var/www/html
+#    ports:
+#      - ${NODE_PORT_1}:3000
+#      - ${NODE_PORT_2}:3001
+#    working_dir: /var/www/html
+#    entrypoint: ['npm']
+#    networks:
+#      - laravel
 
   artisan:
     build:
@@ -109,13 +111,13 @@ services:
         - PHPGROUP=${PHPGROUP:-www-data}
     container_name: artisan_${NAME}
     volumes:
-      - ./src:/var/www/html:delegated
+      - ..:/var/www/html:delegated
     depends_on:
       - mysql
     working_dir: /var/www/html
     entrypoint: ['php', '/var/www/html/artisan']
     networks:
-      - project
+      - laravel
 
   mailhog:
     image: mailhog/mailhog:latest
@@ -124,14 +126,21 @@ services:
       - ${MAILHOG_PORT_1}:1025
       - ${MAILHOG_PORT_2}:8025
     networks:
-      - project
+      - laravel
+
+#  meilisearch:
+#    image: metamehta/meilisearch-arm64
+#    #command: ./meilisearch --master-key=masterKey --no-analytics=true
+#    container_name: meilisearch_test
+#    ports:
+#      - "7700:7700"
 
 #  selenium:
 #    image: 'selenium/standalone-chrome'
 #    volumes:
 #      - '/dev/shm:/dev/shm'
 #    networks:
-#      - project
+#      - laravel
 
 #  cron:
 #    build:
@@ -139,6 +148,33 @@ services:
 #      dockerfile: cron.dockerfile
 #    container_name: cron
 #    volumes:
-#      - ./src:/var/www/html
+#      - ..:/var/www/html
 #    networks:
-#      - project
+#      - laravel
+
+
+#  netdata:
+#    image: netdata/netdata
+#    container_name: netdata_${NAME}
+#    hostname: example.com # set to fqdn of host
+#    ports:
+#      - 19999:19999
+#    restart: unless-stopped
+#    cap_add:
+#      - SYS_PTRACE
+#    security_opt:
+#      - apparmor:unconfined
+#    volumes:
+#      - netdataconfig:/etc/netdata
+#      - netdatalib:/var/lib/netdata
+#      - netdatacache:/var/cache/netdata
+#      - /etc/passwd:/host/etc/passwd:ro
+#      - /etc/group:/host/etc/group:ro
+#      - /proc:/host/proc:ro
+#      - /sys:/host/sys:ro
+#      - /etc/os-release:/host/etc/os-release:ro
+
+#volumes:
+#  netdataconfig:
+#  netdatalib:
+#  netdatacache:
