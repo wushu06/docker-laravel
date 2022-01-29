@@ -27,4 +27,6 @@ RUN mkdir -p /usr/src/php/ext/redis \
     && echo 'redis' >> /usr/src/php-available-exts \
     && docker-php-ext-install redis
 
+RUN curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer
+
 CMD ["php-fpm", "-y", "/usr/local/etc/php-fpm.conf", "-R"]

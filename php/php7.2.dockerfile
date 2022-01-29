@@ -32,7 +32,7 @@ RUN apk add --no-cache --virtual build-essentials \
     apk del build-essentials && rm -rf /usr/src/php*
 
 
-
+RUN curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer
 
 
 CMD ["php-fpm", "-y", "/usr/local/etc/php-fpm.conf", "-R"]
